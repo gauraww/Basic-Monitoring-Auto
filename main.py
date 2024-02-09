@@ -1,5 +1,6 @@
 import time
-import subprocess
+import json
+import rdp
 import pyperclip
 import PySimpleGUI as pg
 from selenium import webdriver
@@ -10,13 +11,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
-
-# Replace with your SM9 login details
-username = "gsingh369"
-mailid = "gaurav.singh9@dxc.com"
-ssopass = "Kiran@26129282"
-password = "Iphone@26129282"
-sm9url = "https://am.svcs.entsvcs.net/sm/index.do"
+with open('credentials.json') as f:
+    credentials = json.load(f)
 
 # Use the same user profile as the native Chrome browser
 options = webdriver.ChromeOptions()
@@ -24,20 +20,20 @@ options.add_argument(r"C:\Users\gsingh369\AppData\Local\Google\Chrome\User Data"
 
 # Initialize WebDriver and HPsm plugin
 driver = webdriver.Chrome(options=options)
-driver.get(sm9url)
+driver.get(credentials["sm9url"])
 wait = WebDriverWait(driver, 120)
 action_chains = ActionChains(driver)
 
 # Use WebDriverWait to wait for the element to be present before trying to interact with it
 email_field_xpath = '/html/body/div[2]/main/div[2]/div/div/div[2]/form/div[1]/div[3]/div/div[2]/span/input'
 email_field = wait.until(EC.presence_of_element_located((By.XPATH, email_field_xpath)))
-email_field.send_keys(mailid)
+email_field.send_keys(credentials["mailid"])
 email_field.send_keys(Keys.RETURN)
 
 # Use WebDriverWait to wait for the element to be present before trying to interact with it
 ssopass_field_xpath = '/html/body/div[2]/main/div[2]/div/div/div[2]/form/div[1]/div[4]/div/div[2]/span/input'
 ssopass_field = wait.until(EC.presence_of_element_located((By.XPATH, ssopass_field_xpath)))
-ssopass_field.send_keys(ssopass)
+ssopass_field.send_keys(credentials["ssopass"])
 ssopass_field.send_keys(Keys.RETURN)
 
 # Wait for the button to be present on the next page
@@ -87,25 +83,41 @@ def copy_item(key_num, ac=action_chains, driver=driver,):
     return copied_text
 
 ci_name = copy_item(18)
-iss_title = copy_item(14).split(",")
+issue_title = copy_item(14)
 issue_desc = {}
-for i in iss_title:
+for i in issue_title.split(","):
     if "=" in i:
         key, value = i.split("=")
         issue_desc[key] = value
     else:
         continue
 
-with open("copied_text.txt", "w") as file:
-    file.write(ci_name + "\n")
-    for key, value in issue_desc.items():
-        file.write(f"{key}: {value}\n")
+is3par = None
 
-for _ in range(24):
+def if_3par(issue_title):
+    if issue_title.contains('HP_3PAR'):
+        is3par = True
+        return True
+    elif issue_title.contains('Fabric Performance') or issue_title.contains('Port Health'):
+        is3par = False
+        return False
+
+def get_idport(issue_title):   
+    if if_3par() == True:
+        return issue_desc["id"]
+    else: return issue_desc["ObjectKeyValue"]
+    
+idport = get_idport(issue_title)
+
+with open("copied_text.txt", "w") as file:
+    file.write("Id / Port: " + idport + " , CI: " + ci_name + "\n")
+    file.close()
+
+for _ in range(27):
     action_chains.send_keys(Keys.TAB)
     time.sleep(0.1)
 action_chains.send_keys(Keys.RETURN)
 
-# Close the browser
-driver.quit()
+update_desc = rdp.get_update(ci_name, is3par, idport, credentials)
+
 
