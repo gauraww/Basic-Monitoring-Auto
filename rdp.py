@@ -1,9 +1,7 @@
 import time
 import pyautogui
-import PySimpleGUI
 import datetime
 import pyperclip
-
 
 jservers = [
     "frg-wjump.frg.mcloud.entsvcs.com",
@@ -24,21 +22,28 @@ threepar_cmds = [
 ]
 
 
-def get_jserver(ci_name):
-    if ci_name.contains("frg") or ci_name.contains("ida"):
+def get_jserver(ci_name, jservers):
+    print(ci_name)
+    if "frg" in ci_name or "ida" in ci_name:
         return jservers[0]
-    elif ci_name.contains("deg") or ci_name.contains("edc"):
-        return jservers[0]
-    elif ci_name.contains("acr") or ci_name.contains("crd"):
-        return jservers[0]
-    elif ci_name.contains("dxs") or ci_name.contains("wyn"):
+    elif "edc" in ci_name or "deg" in ci_name:
+        return jservers[1]
+    elif "acr" in ci_name or "crd" in ci_name:
+        return jservers[2]
+    elif "wyn" in ci_name or "dxs" in ci_name:
         return jservers[3]
 
-def run_commands(commands):
-    for command in commands:
-        pyautogui.write(command, interval=0.05)
-        pyautogui.press("enter")
-        time.sleep(5)
+def run_commands(commands, idport):
+    if commands == switch_cmds:
+        for command in commands:
+            pyautogui.write(f'{command} {idport}', interval=0.05)
+            pyautogui.press("enter")
+            time.sleep(5)
+    else:
+        for command in commands:
+            pyautogui.write(command, interval=0.05)
+            pyautogui.press("enter")
+            time.sleep(5)
 
 def get_update(ci_name, is3par, idport, credentials):
     # Open Remote Desktop Connection app
@@ -48,18 +53,18 @@ def get_update(ci_name, is3par, idport, credentials):
     pyautogui.press("enter")
     time.sleep(2)
 
-    jserver = get_jserver(ci_name)
-
     # Input credentials and connect
-    pyautogui.typewrite(jserver)
+    js_name = get_jserver(ci_name, jservers)
+    pyautogui.typewrite(js_name)
+    print(js_name)
     pyautogui.press("enter")
-    time.sleep(4)
+    time.sleep(5)
     pyautogui.typewrite(credentials["password"])
     pyautogui.press("enter")
-    time.sleep(15)
+    time.sleep(20)
     pyautogui.press("enter")
     time.sleep(15)
-    pyautogui.click(x=300, y=300)
+    pyautogui.click(x=400, y=400)
 
     # Open Putty
     pyautogui.hotkey("win", "r")
@@ -72,34 +77,36 @@ def get_update(ci_name, is3par, idport, credentials):
     # Input system name for switch
     pyautogui.typewrite(ci_name)
     pyautogui.press("enter")
-    time.sleep()
+    time.sleep(10)
 
     # Login to second remote desktop with credentials
-    while True:
-        time.sleep(1)  # Adjust the sleep time as needed
-        screen = pyautogui.screenshot()
-        if "login as:" in pyautogui.image_to_string(screen):
-            break
+    # while True:
+    #     screen_width, screen_height = pyautogui.size()
+    #     screen = pyautogui.screenshot()
+    #     if "login as:" in pyautogui.locateOnScreen(screen,minSearchTime=2,region=['0','0',screen_width/2,screen_height/2 ]):
+    #         break
+    
 
-    pyautogui.typewrite("gsingh369")
+    pyautogui.typewrite(credentials["username"], interval=0.1)
     pyautogui.press("enter")
     time.sleep(2)
-    pyautogui.write("Lenovo@26129282")
+    pyautogui.typewrite(credentials["password"], interval=0.3)
     pyautogui.press("enter")
+    time.sleep(15)
 
-    # Wait for Putty to load
-    while True:
-        time.sleep(1)  # Adjust the sleep time as needed
-        screen = pyautogui.screenshot()
-        if f":{credentials["username"]}>" in pyautogui.image_to_string(screen):
-            break
-
+    # # Wait for Putty to load
+    # while True:
+    #     screen_width, screen_height = pyautogui.size()
+    #     screen = pyautogui.screenshot()
+    #     if f":{credentials['username']}>" in pyautogui.locateOnScreen(screen,minSearchTime=2,region=['0','0',screen_width/2,screen_height/2 ]):
+    #         break
+        
     if is3par == True:
-        run_commands(threepar_cmds)
+        run_commands(threepar_cmds, idport)
     elif is3par == False:
-        run_commands(switch_cmds)
+        run_commands(switch_cmds, idport)
     else: 
-        PySimpleGUI.popup_auto_close("NOT a Valid CI. Program Terminated", auto_close_duration=10)
+        pyautogui.alert(text='', title='Not a Valid CI. Program Terminated', button='OK')
         SystemExit
 
     # Copy output and paste in notepad file
@@ -122,7 +129,7 @@ def get_update(ci_name, is3par, idport, credentials):
     pyautogui.press("enter")
     time.sleep(2)
     pyautogui.hotkey("alt", "f4")
-    time.sleep(3)
+    time.sleep(5)
 
     pyautogui.click(x=1400, y=850)
     return clipboard_content

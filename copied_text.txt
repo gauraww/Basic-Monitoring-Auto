@@ -1,9 +1,1 @@
-deg3par9.deg.mcloud.entsvcs.com
-HP_3PAR Eventcode: 2555925
- Component: sw_sysmgr
- details: Total NL raw space usage at 716871G (above 75% of total 955824G).
- state: 1
- nodeid: 0
- id: 370
- serialNumber: CZ38104440
- catalogKey: 0x
+Id / Port: 12/10 , CI: de-es4-ay21-u27-a02.edc.mcloud.entsvcs.com
